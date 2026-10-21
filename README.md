@@ -1,5 +1,7 @@
 # Minecraft Web + Drasl
 
+[![Docker validation](https://github.com/jbroerdev/minecraft-web-drasl/actions/workflows/docker.yml/badge.svg)](https://github.com/jbroerdev/minecraft-web-drasl/actions/workflows/docker.yml)
+
 JavaScript-Client für Minecraft 1.8.8/1.8.9 mit Drasl-Login, WebSocket-Gateway und Online-Bridge in einem Docker-Container. Kein WASM. Der Minecraft-Spielserver läuft separat.
 
 ## Auf dem VPS installieren
@@ -67,6 +69,7 @@ Die Ressourcen liegen als Archive im Repository, damit sich der Container auf de
 
 ## Validierung
 
-Lokal geprüft: Drasl-Identität, abgewiesene Tickets, Logout/Revocation, iframe-Header, Login ohne Cookie sowie /ws-Upgrade und Binärdaten in beide Richtungen. Der Beitritt zur Spielwelt wurde zuvor mit derselben Client/Gateway/Bridge-Kombination lokal getestet. Für diese Docker-Zusammenstellung stehen Image-Build und VPS-Test noch aus: Auf dem Entwicklungsrechner ist Docker nicht installiert.
+Lokal geprüft: Drasl-Identität, abgewiesene Tickets, Logout/Revocation, iframe-Header, Login ohne Cookie sowie /ws-Upgrade und Binärdaten in beide Richtungen. Der Beitritt zur Spielwelt wurde zuvor mit derselben Client/Gateway/Bridge-Kombination lokal getestet. GitHub Actions hat das Docker-Image erfolgreich gebaut, den Container gestartet sowie HTTP, Login-Grafiken und den echten Gateway über /ws geprüft. Prüflauf: https://github.com/jbroerdev/minecraft-web-drasl/actions/runs/39655317586. Ein Deployment auf dem eigenen VPS inklusive TLS-Reverse-Proxy ist damit noch nicht geprüft.
 
 Tests nach Entpacken des Clients: `mkdir -p ../web-dist && tar -xzf client.tar.gz -C ../web-dist && node --test server.test.mjs`. Die Tests verwenden simulierte Drasl-Antworten und brauchen kein echtes Konto.
+
