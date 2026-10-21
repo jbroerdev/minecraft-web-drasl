@@ -1,0 +1,8 @@
+{
+  "name": "minecraft-drasl-launcher",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "minecraft-protocol": "1.68.0"
+  }
+}

@@ -1,0 +1,28 @@
+services:
+  minecraft-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    init: true
+    environment:
+      BIND_HOST: 0.0.0.0
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?Set PUBLIC_ORIGIN in .env}
+      DRASL_GATEWAY_URL: ${DRASL_GATEWAY_URL:?Set DRASL_GATEWAY_URL in .env}
+      FRAME_ANCESTORS: ${FRAME_ANCESTORS:-}
+      COOKIE_SAME_SITE: ${COOKIE_SAME_SITE:-Strict}
+      MINECRAFT_HOST: ${MINECRAFT_HOST:-193.181.217.200}
+      MINECRAFT_PORT: ${MINECRAFT_PORT:-25565}
+    ports:
+      - '127.0.0.1:8790:8790'
+    volumes:
+      - minecraft-state:/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8790/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    stop_grace_period: 20s
+volumes:
+  minecraft-state:
