@@ -1,0 +1,62 @@
+name: Docker validation
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Authentication and WebSocket tests
+        run: |
+          mkdir -p ../web-dist
+          tar -xzf client.tar.gz -C ../web-dist
+          node --test server.test.mjs
+      - name: Validate Compose
+        run: docker compose --env-file .env.example config --quiet
+      - name: Build image
+        run: docker build -t minecraft-web-drasl:test .
+      - name: Start container
+        run: |
+          docker run -d --name minecraft-smoke -p 127.0.0.1:18790:8790 \
+            -e BIND_HOST=0.0.0.0 -e PUBLIC_ORIGIN=http://127.0.0.1:18790 \
+            -e DRASL_GATEWAY_URL=ws://127.0.0.1:18790/ws minecraft-web-drasl:test
+      - name: Verify HTTP and real gateway through /ws
+        shell: bash
+        run: |
+          node --input-type=module <<'JS'
+          import {setTimeout as delay} from 'node:timers/promises';
+          for(let attempt=0;attempt<30;attempt++){
+            try{
+              const page=await fetch('http://127.0.0.1:18790/');
+              if(!page.ok)throw Error('HTTP launcher unavailable');
+              for(const path of ['login-logo.png','login-dirt.png']){
+                const asset=await fetch('http://127.0.0.1:18790/'+path);
+                if(!asset.ok)throw Error('Missing '+path);
+              }
+              await new Promise((resolve,reject)=>{
+                const ws=new WebSocket('ws://127.0.0.1:18790/ws');
+                const timer=setTimeout(()=>{ws.close();reject(Error('Gateway timeout'));},3000);
+                ws.addEventListener('open',()=>{clearTimeout(timer);ws.close();resolve();});
+                ws.addEventListener('error',()=>{clearTimeout(timer);reject(Error('Gateway unavailable'));});
+              });
+              console.log('Container HTTP, login assets and /ws gateway passed');
+              process.exit(0);
+            }catch(error){console.log('Waiting for startup:',error.message);await delay(2000);}
+          }
+          process.exit(1);
+          JS
+      - name: Container logs
+        if: always()
+        run: docker logs minecraft-smoke || true
+      - name: Cleanup
+        if: always()
+        run: docker rm -f minecraft-smoke || true
+
